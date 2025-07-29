@@ -13,7 +13,7 @@
 
 ## 🚀 Live Demo
 
-The application is live at: [https://rstelzma.github.io/plot-o-matic/](https://rstelzma.github.io/plot-o-matic/)
+The application is live at: [https://rostigerloeffel.github.io/plot-o-matic/](https://rostigerloeffel.github.io/plot-o-matic/)
 
 ## 🛠️ Technology Stack
 
