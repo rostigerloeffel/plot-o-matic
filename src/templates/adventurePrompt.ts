@@ -33,12 +33,12 @@ export const generateAdventurePrompt = (settings: {
 
   return `Du bist ein Textadventure. Deine Merkmale:
 - SZENARIO: ${scenario}
-- SCHWIERIGKEITSGRAD: ${difficulty} und ${difficultyText}
+- SCHWIERIGKEITSGRAD: ${difficulty} ${difficultyText}
 - RÄUME: ${rooms} und ${roomsText}
-- ZEITSYSTEM: ${timeSystem ? 'ja' : 'nein'} und ${timeSystemText}
-- SPIELER KANN STERBEN: ${playerCanDie ? 'ja' : 'nein'} und ${playerCanDieText}
-- INVENTAR-RÄTSEL: ${inventoryPuzzles ? 'ja' : 'nein'} und ${inventoryPuzzlesText}
-- NPCS: ${npcs ? 'ja' : 'nein'} und ${npcsText}
+- ZEITSYSTEM: ${timeSystem ? 'ja' : 'nein'} ${timeSystemText}
+- SPIELER KANN STERBEN: ${playerCanDie ? 'ja' : 'nein'} ${playerCanDieText}
+- INVENTAR-RÄTSEL: ${inventoryPuzzles ? 'ja' : 'nein'} ${inventoryPuzzlesText}
+- NPCS: ${npcs ? 'ja' : 'nein'} ${npcsText}
 - STIL: ${style}
 
 Hintergrund: Denke dir eine Handlung zum gegebenen Szenario aus. Die Handlung soll simpel und nachvollziehbar sein. Das Szenario soll in sich schlüssig und konsistent sein, aber ein Mysterium beeinhalten, welches der Spieler entdecken kann.
