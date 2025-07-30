@@ -68,6 +68,13 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
       return;
     }
 
+    // Check if API key is configured
+    const apiKey = localStorage.getItem('openai_api_key');
+    if (!apiKey || apiKey.trim() === '') {
+      alert('Bitte konfiguriere zuerst deinen ChatGPT API-Schlüssel über den Button oben rechts.');
+      return;
+    }
+
     setIsGenerating(true);
     
     try {
@@ -78,7 +85,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('openai_api_key') || ''}`,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -99,7 +106,8 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error('Fehler beim Aufruf der ChatGPT API');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`API-Fehler: ${response.status} ${response.statusText}${errorData.error ? ` - ${errorData.error.message || errorData.error}` : ''}`);
       }
 
       const data = await response.json();
@@ -109,11 +117,14 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
     } catch (error) {
       console.error('Error generating adventure:', error);
       
+      // Show detailed error message
+      const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      
       // Fallback: Show the prompt that would be sent to ChatGPT
       const prompt = generatePrompt(settings);
       const fallbackResponse = {
         prompt: prompt,
-        message: "ChatGPT API nicht verfügbar. Hier ist der Prompt, der an ChatGPT gesendet würde:",
+        message: `ChatGPT API nicht verfügbar: ${errorMessage}`,
         adventure: {
           title: `Abenteuer: ${settings.scenario}`,
           description: `Ein ${settings.difficulty.level}es Abenteuer mit ${settings.rooms.amount} Räumen.`,
@@ -127,7 +138,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
       };
       
       setGeneratedJson(JSON.stringify(fallbackResponse, null, 2));
-      alert('ChatGPT API nicht verfügbar. Der Prompt wird angezeigt, der an ChatGPT gesendet würde.');
+      alert(`ChatGPT API nicht verfügbar: ${errorMessage}\n\nDer Prompt wird angezeigt, der an ChatGPT gesendet würde.`);
     } finally {
       setIsGenerating(false);
     }

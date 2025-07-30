@@ -96,6 +96,22 @@ export const AdventurePlayer: React.FC<AdventurePlayerProps> = ({
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;
 
+    // Check if API key is configured
+    const apiKey = localStorage.getItem('openai_api_key');
+    if (!apiKey || apiKey.trim() === '') {
+      const errorMessage: ChatMessage = {
+        id: Date.now().toString(),
+        type: 'system',
+        content: 'Bitte konfiguriere zuerst deinen ChatGPT API-Schlüssel über den Button oben rechts.',
+        timestamp: new Date()
+      };
+      setSession(prev => ({
+        ...prev,
+        messages: [...prev.messages, errorMessage]
+      }));
+      return;
+    }
+
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       type: 'user',
@@ -128,7 +144,7 @@ Antworte als der Abenteuer-Game Master. Berücksichtige den aktuellen Raum, das 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('openai_api_key') || ''}`,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -149,7 +165,8 @@ Antworte als der Abenteuer-Game Master. Berücksichtige den aktuellen Raum, das 
       });
 
       if (!response.ok) {
-        throw new Error('Fehler beim Aufruf der ChatGPT API');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`API-Fehler: ${response.status} ${response.statusText}${errorData.error ? ` - ${errorData.error.message || errorData.error}` : ''}`);
       }
 
       const data = await response.json();
@@ -171,81 +188,26 @@ Antworte als der Abenteuer-Game Master. Berücksichtige den aktuellen Raum, das 
     } catch (error) {
       console.error('Error sending message:', error);
       
-      // Fallback response
-      const fallbackResponse = generateFallbackResponse(content, currentRoom);
+      // Show detailed error message
+      const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
       
-      const assistantMessage: ChatMessage = {
+      const errorChatMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: fallbackResponse.content,
-        timestamp: new Date(),
-        roomId: fallbackResponse.roomId || undefined
+        type: 'system',
+        content: `ChatGPT API nicht verfügbar: ${errorMessage}`,
+        timestamp: new Date()
       };
-
+      
       setSession(prev => ({
         ...prev,
-        messages: [...prev.messages, assistantMessage],
-        currentRoom: fallbackResponse.roomId || prev.currentRoom,
-        inventory: fallbackResponse.inventory || prev.inventory,
-        variables: fallbackResponse.variables || prev.variables
+        messages: [...prev.messages, errorChatMessage]
       }));
-
-      if (fallbackResponse.roomId && fallbackResponse.roomId !== currentRoom) {
-        setCurrentRoom(fallbackResponse.roomId);
-      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const generateFallbackResponse = (userInput: string, currentRoom: string | null) => {
-    // This is a simple fallback - in reality, this would be handled by ChatGPT
-    const input = userInput.toLowerCase();
-    
-    if (input.includes('inventar') || input.includes('inventory')) {
-      return {
-        content: `Dein Inventar: ${session.inventory.length > 0 ? session.inventory.join(', ') : 'Leer'}`,
-        roomId: currentRoom,
-        inventory: session.inventory,
-        variables: session.variables
-      };
-    }
-    
-    if (input.includes('umsehen') || input.includes('schauen')) {
-      return {
-        content: `Du schaust dich um. Du siehst verschiedene Objekte und Ausgänge. Was möchtest du genauer untersuchen?`,
-        roomId: currentRoom,
-        inventory: session.inventory,
-        variables: session.variables
-      };
-    }
-    
-    if (input.includes('norden') || input.includes('north')) {
-      return {
-        content: `Du gehst nach Norden und betrittst einen neuen Raum. Die Umgebung verändert sich...`,
-        roomId: 'room_north',
-        inventory: session.inventory,
-        variables: session.variables
-      };
-    }
-    
-    if (input.includes('süden') || input.includes('south')) {
-      return {
-        content: `Du gehst nach Süden und betrittst einen neuen Raum. Die Umgebung verändert sich...`,
-        roomId: 'room_south',
-        inventory: session.inventory,
-        variables: session.variables
-      };
-    }
-    
-    // Default response
-    return {
-      content: `Du versuchst "${userInput}". Ich verstehe deine Absicht, aber ich brauche mehr Kontext. Was genau möchtest du tun?`,
-      roomId: currentRoom,
-      inventory: session.inventory,
-      variables: session.variables
-    };
-  };
+
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
