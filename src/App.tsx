@@ -12,7 +12,7 @@ function App() {
   const [currentAdventure, setCurrentAdventure] = useState<Adventure | null>(null);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   
-  const { apiKey, isConfigured, saveApiKey } = useApiKey();
+  const { isConfigured, saveApiKey } = useApiKey();
 
   // Load adventures from localStorage on mount
   useEffect(() => {
