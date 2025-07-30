@@ -90,7 +90,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
+          model: 'gpt-4o',
           messages: [
             {
               role: 'system',
@@ -101,7 +101,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
               content: prompt
             }
           ],
-          max_tokens: 4000,
+          max_tokens: 16384,
           temperature: 0.7
         })
       });
