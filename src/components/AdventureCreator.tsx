@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AdventureSettings } from '../types';
 import { generateAdventurePrompt } from '../templates/adventurePrompt';
+import { SYSTEM_PROMPT } from '../templates/systemPrompt';
 
 interface AdventureCreatorProps {
   onSave: (settings: AdventureSettings, jsonData: string) => void;
@@ -93,7 +94,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
           messages: [
             {
               role: 'system',
-              content: 'Du bist ein erfahrener Textadventure-Game Master. Erstelle spannende und interaktive Abenteuer.'
+              content: SYSTEM_PROMPT
             },
             {
               role: 'user',
