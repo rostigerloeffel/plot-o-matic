@@ -1,29 +1,30 @@
-export interface StoryNode {
-  id: string;
-  text: string;
-  choices?: Choice[];
-  isEnd?: boolean;
-}
-
-export interface Choice {
-  id: string;
-  text: string;
-  nextNodeId: string;
-  condition?: string;
-}
-
-export interface StoryLine {
-  id: string;
-  type: 'user' | 'system' | 'narrative';
-  text: string;
-  timestamp: Date;
-}
-
-export interface GameState {
-  currentNodeId: string;
-  storyLines: StoryLine[];
-  inventory: string[];
-  variables: Record<string, any>;
+export interface AdventureSettings {
+  scenario: string;
+  difficulty: {
+    level: 'einfach' | 'mittel' | 'schwer';
+    additionalText: string;
+  };
+  rooms: {
+    amount: 'wenige' | 'mittel' | 'viele';
+    additionalText: string;
+  };
+  timeSystem: {
+    enabled: boolean;
+    additionalText: string;
+  };
+  playerCanDie: {
+    enabled: boolean;
+    additionalText: string;
+  };
+  inventoryPuzzles: {
+    enabled: boolean;
+    additionalText: string;
+  };
+  npcs: {
+    enabled: boolean;
+    additionalText: string;
+  };
+  style: string;
 }
 
 export interface Adventure {
@@ -31,10 +32,27 @@ export interface Adventure {
   title: string;
   description: string;
   author: string;
-  nodes: StoryNode[];
-  startNodeId: string;
+  settings: AdventureSettings;
+  jsonData: string; // The complete JSON adventure data from ChatGPT
   createdAt: Date;
   updatedAt: Date;
 }
 
-export type ViewMode = 'play' | 'edit' | 'create'; 
+export interface ChatMessage {
+  id: string;
+  type: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
+  roomId?: string; // For room-based chat organization
+}
+
+export interface GameSession {
+  adventureId: string;
+  messages: ChatMessage[];
+  currentRoom?: string;
+  inventory: string[];
+  variables: Record<string, any>;
+  isActive: boolean;
+}
+
+export type ViewMode = 'play' | 'create'; 

@@ -4,17 +4,13 @@ import { Adventure } from '../types';
 interface AdventureLibraryProps {
   adventures: Adventure[];
   onSelectAdventure: (adventure: Adventure) => void;
-  onEditAdventure: (adventure: Adventure) => void;
   onDeleteAdventure: (adventureId: string) => void;
-  onCreateNew: () => void;
 }
 
 export const AdventureLibrary: React.FC<AdventureLibraryProps> = ({
   adventures,
   onSelectAdventure,
-  onEditAdventure,
-  onDeleteAdventure,
-  onCreateNew
+  onDeleteAdventure
 }) => {
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('de-DE', {
@@ -27,20 +23,18 @@ export const AdventureLibrary: React.FC<AdventureLibraryProps> = ({
   return (
     <div className="adventure-library">
       <div className="library-header">
-        <h2>Abenteuer-Bibliothek</h2>
-        <button onClick={onCreateNew} className="create-button">
-          Neues Abenteuer erstellen
-        </button>
+        <h2>Abenteuer spielen</h2>
+        <p>Wähle ein gespeichertes Abenteuer aus, um es zu spielen.</p>
       </div>
 
       {adventures.length === 0 ? (
         <div className="empty-library">
           <p>Keine Abenteuer vorhanden.</p>
-          <p>Erstelle dein erstes Abenteuer!</p>
+          <p>Erstelle zuerst ein neues Abenteuer im "Abenteuer erstellen" Tab!</p>
         </div>
       ) : (
         <div className="adventures-grid">
-          {adventures.map(adventure => (
+          {adventures.map((adventure) => (
             <div key={adventure.id} className="adventure-card">
               <div className="adventure-header">
                 <h3>{adventure.title}</h3>
@@ -54,9 +48,11 @@ export const AdventureLibrary: React.FC<AdventureLibraryProps> = ({
                 {adventure.description || 'Keine Beschreibung verfügbar.'}
               </div>
               
-              <div className="adventure-stats">
-                <span>{adventure.nodes.length} Knoten</span>
-                <span>{adventure.nodes.filter(n => n.isEnd).length} Enden</span>
+              <div className="adventure-settings">
+                <span>Schwierigkeit: {adventure.settings.difficulty.level}</span>
+                <span>Räume: {adventure.settings.rooms.amount}</span>
+                {adventure.settings.npcs.enabled && <span>NPCs</span>}
+                {adventure.settings.inventoryPuzzles.enabled && <span>Inventar-Rätsel</span>}
               </div>
               
               <div className="adventure-actions">
@@ -65,12 +61,6 @@ export const AdventureLibrary: React.FC<AdventureLibraryProps> = ({
                   className="play-button"
                 >
                   Spielen
-                </button>
-                <button 
-                  onClick={() => onEditAdventure(adventure)}
-                  className="edit-button"
-                >
-                  Bearbeiten
                 </button>
                 <button 
                   onClick={() => onDeleteAdventure(adventure.id)}
