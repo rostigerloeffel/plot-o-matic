@@ -54,6 +54,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedJson, setGeneratedJson] = useState<string>('');
+  const [streamingContent, setStreamingContent] = useState<string>('');
 
   const generatePrompt = (settings: AdventureSettings): string => {
     return generateAdventurePrompt({
@@ -94,12 +95,13 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
     }
 
     setIsGenerating(true);
+    setStreamingContent('');
     
     try {
       // Generate the ChatGPT prompt
       const prompt = generatePrompt(settings);
       
-      // Call the ChatGPT API directly
+      // Call the ChatGPT API with streaming
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -107,7 +109,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4.1-nano',
+          model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',
@@ -119,7 +121,8 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
             }
           ],
           max_tokens: 32768,
-          temperature: 0
+          temperature: 0,
+          stream: true
         })
       });
 
@@ -128,10 +131,46 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
         throw new Error(`API-Fehler: ${response.status} ${response.statusText}${errorData.error ? ` - ${errorData.error.message || errorData.error}` : ''}`);
       }
 
-      const data = await response.json();
-      const adventureJson = data.choices[0].message.content;
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Streaming response body not available');
+      }
+
+      let fullContent = '';
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+        
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            
+            if (data === '[DONE]') {
+              break;
+            }
+            
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+                const content = parsed.choices[0].delta.content;
+                fullContent += content;
+                setStreamingContent(fullContent);
+              }
+            } catch (e) {
+              // Skip invalid JSON lines
+            }
+          }
+        }
+      }
       
-      setGeneratedJson(adventureJson);
+      setGeneratedJson(fullContent);
     } catch (error) {
       console.error('Error generating adventure:', error);
       
@@ -456,13 +495,18 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
           {isGenerating ? 'Generiere...' : 'Abenteuer generieren'}
         </button>
         
-        {generatedJson && (
+        {(generatedJson || streamingContent) && (
           <div className="generated-preview">
             <h3>Generiertes Abenteuer</h3>
-            <pre>{generatedJson}</pre>
-            <button onClick={handleSave} className="save-button">
-              Abenteuer speichern
-            </button>
+            <pre className={isGenerating ? 'streaming' : ''}>
+              {isGenerating ? streamingContent : generatedJson}
+              {isGenerating && <span className="typing-cursor">|</span>}
+            </pre>
+            {!isGenerating && generatedJson && (
+              <button onClick={handleSave} className="save-button">
+                Abenteuer speichern
+              </button>
+            )}
           </div>
         )}
         

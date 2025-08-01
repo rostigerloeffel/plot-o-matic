@@ -884,6 +884,23 @@ body {
   margin-bottom: 1rem;
   white-space: pre-wrap;
   word-wrap: break-word;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.generated-preview pre.streaming {
+  border-color: #4a9eff;
+  box-shadow: 0 0 10px rgba(74, 158, 255, 0.3);
+}
+
+.typing-cursor {
+  animation: blink 1s infinite;
+  color: #4a9eff;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }
 
 .save-button {
