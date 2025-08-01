@@ -50,5 +50,5 @@ Struktur: Das Abenteuer soll in "Räumen" organisiert werden. Der Spieler, soll 
 
 Ablauf: Frage immer wieder, was der Spieler tun möchte. Interpretiere seine Eingabe. Die Eingaben stellen Interaktionen mit dem Raum, den gesammelten Gegenständen oder NPCs dar. Beobachte, ob der Spieler Rätsel gelöst hat und gib ihm Feedback. Gib in den Beschreibungen der Räume keine Hinweise zur Lösung der Rätsel.
 
-Anderes: Erstelle alle Räume, alle NPCs, alle Rätsel usw. JETZTm, nicht erst während des Spiels. Generiere insbesondere schon alle Beschreibungstexte und Dialoge. Serialisiere des komplette Abenteuer als JSON und gib es mir zurück.`;
+Serialisiere das komplette Abenteuer als JSON. Ergänze alle notwendigen Informationen, damit du es später auch jederzeit ausführen kannst. Jede Ausführung des Abenteuers sollte exakt gleich verlaufen. Gib mir das serialisierte Abenteuer als JSON zurück.`;
 }; 

@@ -120,7 +120,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
               content: prompt
             }
           ],
-          max_tokens: 32768,
+          max_tokens: 16384,
           temperature: 0,
           stream: true
         })
@@ -218,6 +218,33 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
     }
 
     onSave(settings, generatedJson);
+  };
+
+  const handleDownload = () => {
+    if (!generatedJson) {
+      alert('Bitte generiere zuerst ein Abenteuer.');
+      return;
+    }
+
+    try {
+      // Create a filename based on the scenario
+      const scenarioName = settings.scenario.trim().replace(/[^a-zA-Z0-9äöüßÄÖÜ\s]/g, '').replace(/\s+/g, '_');
+      const filename = `abenteuer_${scenarioName}_${settings.seed}.json`;
+      
+      // Create blob and download
+      const blob = new Blob([generatedJson], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('Fehler beim Herunterladen der Datei.');
+    }
   };
 
   return (
@@ -503,9 +530,14 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
               {isGenerating && <span className="typing-cursor">|</span>}
             </pre>
             {!isGenerating && generatedJson && (
-              <button onClick={handleSave} className="save-button">
-                Abenteuer speichern
-              </button>
+              <div className="action-buttons">
+                <button onClick={handleSave} className="save-button">
+                  Abenteuer speichern
+                </button>
+                <button onClick={handleDownload} className="download-button">
+                  JSON herunterladen
+                </button>
+              </div>
             )}
           </div>
         )}
