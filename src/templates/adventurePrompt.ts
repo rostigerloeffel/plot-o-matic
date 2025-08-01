@@ -33,7 +33,7 @@ export const generateAdventurePrompt = (settings: {
     style
   } = settings;
 
-  return `Erstelle ein vollständig ausführbares Text-Adventure. Die Merkmale:
+  return `Erstelle ein vollständig ausführbares Text-Adventure für ChatGPT. Die Merkmale:
 - SZENARIO: ${scenario}
 - SEED: ${seed}
 - SCHWIERIGKEITSGRAD: ${difficulty} ${difficultyText}
@@ -46,8 +46,19 @@ export const generateAdventurePrompt = (settings: {
 
 Hintergrund: Denke dir eine Handlung zum gegebenen Szenario aus. Die Handlung soll simpel und nachvollziehbar sein. Das Szenario soll in sich schlüssig und konsistent sein, aber ein Mysterium beeinhalten, welches der Spieler entdecken kann. Verwende den Seed als Basis für konsistente Zufallsgenerierung und um sicherzustellen, dass das Abenteuer reproduzierbar ist.
 
-WICHTIG: Du musst das Abenteuer in einem spezifischen JSON-Format serialisieren, damit es automatisch ausführbar ist. Folge diesem Schema exakt:
+WICHTIG: Du musst das Abenteuer in einem spezifischen JSON-Format serialisieren, damit ChatGPT es als Game Master ausführen kann. Das JSON enthält alle notwendigen Informationen für ChatGPT, um das Adventure zu leiten.
 
+CHATGPT-AUSFÜHRUNGSANWEISUNGEN:
+ChatGPT wird als Game Master fungieren und:
+1. Den Spielzustand verwalten (inventory, visitedRooms, completedPuzzles, gameVariables)
+2. Spieler-Eingaben interpretieren und entsprechende Aktionen ausführen
+3. Events bei relevanten Aktionen prüfen und auslösen
+4. NPC-Dialoge führen basierend auf dialogue-Nodes
+5. Rätsel-Lösungen prüfen und Belohnungen vergeben
+6. Atmosphärische Beschreibungen geben
+7. Sieg/Niederlage-Bedingungen prüfen
+
+JSON-SCHEMA (ChatGPT-freundlich):
 {
   "metadata": {
     "title": "Titel des Abenteuers",
@@ -82,7 +93,7 @@ WICHTIG: Du musst das Abenteuer in einem spezifischen JSON-Format serialisieren,
       "id": "room_id",
       "name": "Raumname",
       "description": "Kurze Beschreibung",
-      "longDescription": "Detaillierte Beschreibung",
+      "longDescription": "Detaillierte atmosphärische Beschreibung für ChatGPT",
       "exits": {
         "norden": {
           "targetRoom": "target_room_id",
@@ -106,7 +117,7 @@ WICHTIG: Du musst das Abenteuer in einem spezifischen JSON-Format serialisieren,
       "id": "item_id",
       "name": "Gegenstandsname",
       "description": "Kurze Beschreibung",
-      "longDescription": "Detaillierte Beschreibung",
+      "longDescription": "Detaillierte Beschreibung für ChatGPT",
       "isTakeable": true,
       "isUsable": true,
       "isCombinable": false,
@@ -122,14 +133,14 @@ WICHTIG: Du musst das Abenteuer in einem spezifischen JSON-Format serialisieren,
       "id": "npc_id",
       "name": "NPC-Name",
       "description": "Beschreibung",
-      "personality": "Persönlichkeit",
+      "personality": "Detaillierte Persönlichkeit für ChatGPT",
       "location": "room_id",
       "isAlive": true,
       "isFriendly": true,
       "dialogue": {
         "start": {
           "id": "start",
-          "text": "Dialog-Text",
+          "text": "Dialog-Text für ChatGPT",
           "responses": [
             {
               "text": "Antwort-Option",
@@ -146,7 +157,7 @@ WICHTIG: Du musst das Abenteuer in einem spezifischen JSON-Format serialisieren,
     "puzzle_id": {
       "id": "puzzle_id",
       "name": "Rätselname",
-      "description": "Beschreibung",
+      "description": "Beschreibung für ChatGPT",
       "type": "inventory|logic|pattern|sequence|combination|timing",
       "difficulty": "easy|medium|hard",
       "isSolved": false,
@@ -170,7 +181,7 @@ WICHTIG: Du musst das Abenteuer in einem spezifischen JSON-Format serialisieren,
     "event_id": {
       "id": "event_id",
       "name": "Ereignisname",
-      "description": "Beschreibung",
+      "description": "Beschreibung für ChatGPT",
       "trigger": {
         "type": "enter_room|pickup_item|use_item|solve_puzzle|talk_npc|time_elapsed|variable_change",
         "target": "trigger_target"
@@ -180,7 +191,7 @@ WICHTIG: Du musst das Abenteuer in einem spezifischen JSON-Format serialisieren,
           "type": "message|teleport|give_item|take_item|unlock|lock|set_variable|damage|heal",
           "target": "action_target",
           "value": "action_value",
-          "message": "Nachricht"
+          "message": "Nachricht für ChatGPT"
         }
       ],
       "isOneTime": true,
@@ -252,6 +263,17 @@ WICHTIG: Du musst das Abenteuer in einem spezifischen JSON-Format serialisieren,
   }
 }
 
+CHATGPT-AUSFÜHRUNGSREGELN:
+1. Verwende die JSON-Daten als Spielwelt-Definition
+2. Halte den Spielzustand aktuell (inventory, visitedRooms, completedPuzzles, gameVariables)
+3. Reagiere auf Spieler-Eingaben basierend auf den verfügbaren Befehlen
+4. Prüfe bei jeder Aktion die Bedingungen (requiredItems, requiredPuzzles, etc.)
+5. Aktualisiere den Spielzustand entsprechend
+6. Gib detaillierte, atmosphärische Beschreibungen
+7. Verwende die defaultResponses für unbekannte oder unmögliche Aktionen
+8. Prüfe Events bei relevanten Aktionen (enter_room, pickup_item, etc.)
+9. Beende das Spiel wenn isGameOver oder isVictory true ist
+
 ANFORDERUNGEN:
 1. Erstelle mindestens 3-5 Räume je nach Schwierigkeitsgrad
 2. Jeder Raum muss eine eindeutige ID haben (z.B. "kueche", "flur", "keller")
@@ -261,10 +283,11 @@ ANFORDERUNGEN:
 6. Erstelle 1-3 Events für dynamische Interaktionen
 7. Alle IDs müssen eindeutig sein und nur Kleinbuchstaben, Zahlen und Unterstriche enthalten
 8. Der erste Raum muss "start" als ID haben
-9. Alle Beschreibungen müssen auf Deutsch sein
+9. Alle Beschreibungen müssen auf Deutsch sein und für ChatGPT verständlich
 10. Rätsel müssen lösbar sein und klare Hinweise haben
 11. NPCs müssen vollständige Dialogbäume haben
 12. Events müssen sinnvolle Trigger und Aktionen haben
+13. Alle Beschreibungen müssen detailliert genug sein, damit ChatGPT sie verwenden kann
 
 Gib mir nur das JSON zurück, keine zusätzlichen Erklärungen oder Kommentare.`;
 }; 
