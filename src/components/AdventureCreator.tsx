@@ -3,6 +3,16 @@ import { AdventureSettings } from '../types';
 import { generateAdventurePrompt } from '../templates/adventurePrompt';
 import { SYSTEM_PROMPT } from '../templates/systemPrompt';
 
+// Function to generate a random 10-character alphanumeric seed
+const generateRandomSeed = (): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 10; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
 interface AdventureCreatorProps {
   onSave: (settings: AdventureSettings, jsonData: string) => void;
   onCancel: () => void;
@@ -14,6 +24,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
 }) => {
   const [settings, setSettings] = useState<AdventureSettings>({
     scenario: '',
+    seed: generateRandomSeed(),
     difficulty: {
       level: 'mittel',
       additionalText: ''
@@ -47,6 +58,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
   const generatePrompt = (settings: AdventureSettings): string => {
     return generateAdventurePrompt({
       scenario: settings.scenario,
+      seed: settings.seed,
       difficulty: settings.difficulty.level,
       difficultyText: settings.difficulty.additionalText,
       rooms: settings.rooms.amount,
@@ -66,6 +78,11 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
   const handleGenerateAdventure = async () => {
     if (!settings.scenario.trim()) {
       alert('Bitte gib ein Szenario ein.');
+      return;
+    }
+
+    if (!settings.seed.trim() || settings.seed.length !== 10 || !/^[A-Za-z0-9]{10}$/.test(settings.seed)) {
+      alert('Bitte gib einen gültigen 10-stelligen alphanumerischen Seed ein.');
       return;
     }
 
@@ -150,6 +167,11 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
       alert('Bitte gib ein Szenario ein.');
       return;
     }
+
+    if (!settings.seed.trim() || settings.seed.length !== 10 || !/^[A-Za-z0-9]{10}$/.test(settings.seed)) {
+      alert('Bitte gib einen gültigen 10-stelligen alphanumerischen Seed ein.');
+      return;
+    }
     
     if (!generatedJson) {
       alert('Bitte generiere zuerst ein Abenteuer.');
@@ -181,6 +203,35 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
               placeholder="Beschreibe das Szenario deines Abenteuers..."
               rows={4}
             />
+          </div>
+
+          <div className="form-group">
+            <label>Seed (Pflicht):</label>
+            <div className="seed-input-group">
+              <input
+                type="text"
+                value={settings.seed}
+                onChange={(e) => setSettings(prev => ({
+                  ...prev,
+                  seed: e.target.value
+                }))}
+                placeholder="10-stelliger alphanumerischer String"
+                maxLength={10}
+                pattern="[A-Za-z0-9]{10}"
+                title="Bitte gib einen 10-stelligen alphanumerischen String ein"
+              />
+              <button
+                type="button"
+                onClick={() => setSettings(prev => ({
+                  ...prev,
+                  seed: generateRandomSeed()
+                }))}
+                className="generate-seed-button"
+              >
+                Neuer Seed
+              </button>
+            </div>
+            <small>Der Seed wird für konsistente Zufallsgenerierung verwendet und macht das Abenteuer reproduzierbar.</small>
           </div>
 
           <div className="form-group">

@@ -1,5 +1,6 @@
 export interface AdventureSettings {
   scenario: string;
+  seed: string; // 10-character alphanumeric string
   difficulty: {
     level: 'einfach' | 'mittel' | 'schwer';
     additionalText: string;
