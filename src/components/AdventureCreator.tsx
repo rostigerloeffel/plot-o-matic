@@ -56,7 +56,6 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedAdventureData, setGeneratedAdventureData] = useState<any>(null);
   const [creationPrompt, setCreationPrompt] = useState<string>('');
-  const [streamingContent, setStreamingContent] = useState<string>('');
 
   const generatePrompt = (settings: AdventureSettings): string => {
     return generateAdventurePrompt({
@@ -97,7 +96,6 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
     }
 
     setIsGenerating(true);
-    setStreamingContent('');
     
     try {
       // Generate the ChatGPT prompt
@@ -164,7 +162,6 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
               if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
                 const content = parsed.choices[0].delta.content;
                 fullContent += content;
-                setStreamingContent(fullContent);
               }
             } catch (e) {
               // Skip invalid JSON lines
@@ -596,41 +593,34 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
           {isGenerating ? 'Generiere...' : 'Abenteuer generieren'}
         </button>
         
-        {(generatedAdventureData || streamingContent) && (
+        {generatedAdventureData && (
           <div className="generated-preview">
             <h3>Generiertes Abenteuer</h3>
-            {isGenerating ? (
-              <pre className="streaming">
-                {streamingContent}
-                <span className="typing-cursor">|</span>
-              </pre>
-            ) : generatedAdventureData ? (
-              <div className="adventure-summary">
-                <div className="adventure-title">
-                  <h4>{generatedAdventureData.metadata?.title || 'Unbekanntes Abenteuer'}</h4>
-                </div>
-                <div className="adventure-description">
-                  <p>{generatedAdventureData.metadata?.description || 'Keine Beschreibung verfügbar.'}</p>
-                </div>
-                <div className="adventure-details">
-                  <p><strong>Schwierigkeit:</strong> {generatedAdventureData.metadata?.settings?.difficulty || 'Unbekannt'}</p>
-                  <p><strong>Räume:</strong> {Object.keys(generatedAdventureData.rooms || {}).length}</p>
-                  <p><strong>Gegenstände:</strong> {Object.keys(generatedAdventureData.items || {}).length}</p>
-                  {generatedAdventureData.metadata?.settings?.npcs && (
-                    <p><strong>NPCs:</strong> {Object.keys(generatedAdventureData.npcs || {}).length}</p>
-                  )}
-                  <p><strong>Rätsel:</strong> {Object.keys(generatedAdventureData.puzzles || {}).length}</p>
-                </div>
-                <div className="action-buttons">
-                  <button onClick={handleSave} className="save-button">
-                    Abenteuer speichern
-                  </button>
-                  <button onClick={handleDownload} className="download-button">
-                    JSON herunterladen
-                  </button>
-                </div>
+            <div className="adventure-summary">
+              <div className="adventure-title">
+                <h4>{generatedAdventureData.metadata?.title || 'Unbekanntes Abenteuer'}</h4>
               </div>
-            ) : null}
+              <div className="adventure-description">
+                <p>{generatedAdventureData.metadata?.description || 'Keine Beschreibung verfügbar.'}</p>
+              </div>
+              <div className="adventure-details">
+                <p><strong>Schwierigkeit:</strong> {generatedAdventureData.metadata?.settings?.difficulty || 'Unbekannt'}</p>
+                <p><strong>Räume:</strong> {Object.keys(generatedAdventureData.rooms || {}).length}</p>
+                <p><strong>Gegenstände:</strong> {Object.keys(generatedAdventureData.items || {}).length}</p>
+                {generatedAdventureData.metadata?.settings?.npcs && (
+                  <p><strong>NPCs:</strong> {Object.keys(generatedAdventureData.npcs || {}).length}</p>
+                )}
+                <p><strong>Rätsel:</strong> {Object.keys(generatedAdventureData.puzzles || {}).length}</p>
+              </div>
+              <div className="action-buttons">
+                <button onClick={handleSave} className="save-button">
+                  Abenteuer speichern
+                </button>
+                <button onClick={handleDownload} className="download-button">
+                  JSON herunterladen
+                </button>
+              </div>
+            </div>
           </div>
         )}
         
