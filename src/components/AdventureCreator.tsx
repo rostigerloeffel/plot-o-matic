@@ -599,20 +599,38 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
         {(generatedAdventureData || streamingContent) && (
           <div className="generated-preview">
             <h3>Generiertes Abenteuer</h3>
-            <pre className={isGenerating ? 'streaming' : ''}>
-              {isGenerating ? streamingContent : JSON.stringify(generatedAdventureData, null, 2)}
-              {isGenerating && <span className="typing-cursor">|</span>}
-            </pre>
-            {!isGenerating && generatedAdventureData && (
-              <div className="action-buttons">
-                <button onClick={handleSave} className="save-button">
-                  Abenteuer speichern
-                </button>
-                <button onClick={handleDownload} className="download-button">
-                  JSON herunterladen
-                </button>
+            {isGenerating ? (
+              <pre className="streaming">
+                {streamingContent}
+                <span className="typing-cursor">|</span>
+              </pre>
+            ) : generatedAdventureData ? (
+              <div className="adventure-summary">
+                <div className="adventure-title">
+                  <h4>{generatedAdventureData.metadata?.title || 'Unbekanntes Abenteuer'}</h4>
+                </div>
+                <div className="adventure-description">
+                  <p>{generatedAdventureData.metadata?.description || 'Keine Beschreibung verfügbar.'}</p>
+                </div>
+                <div className="adventure-details">
+                  <p><strong>Schwierigkeit:</strong> {generatedAdventureData.metadata?.settings?.difficulty || 'Unbekannt'}</p>
+                  <p><strong>Räume:</strong> {Object.keys(generatedAdventureData.rooms || {}).length}</p>
+                  <p><strong>Gegenstände:</strong> {Object.keys(generatedAdventureData.items || {}).length}</p>
+                  {generatedAdventureData.metadata?.settings?.npcs && (
+                    <p><strong>NPCs:</strong> {Object.keys(generatedAdventureData.npcs || {}).length}</p>
+                  )}
+                  <p><strong>Rätsel:</strong> {Object.keys(generatedAdventureData.puzzles || {}).length}</p>
+                </div>
+                <div className="action-buttons">
+                  <button onClick={handleSave} className="save-button">
+                    Abenteuer speichern
+                  </button>
+                  <button onClick={handleDownload} className="download-button">
+                    JSON herunterladen
+                  </button>
+                </div>
               </div>
-            )}
+            ) : null}
           </div>
         )}
         

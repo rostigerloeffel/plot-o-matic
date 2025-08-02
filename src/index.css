@@ -859,48 +859,84 @@ body {
 }
 
 .generated-preview {
-  background-color: #2a2a2a;
-  border: 1px solid #444;
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  padding: 1.5rem;
-  margin-top: 1rem;
-  width: 100%;
-  max-width: 800px;
-}
-
-.generated-preview h3 {
-  margin: 0 0 1rem 0;
-  color: #e0e0e0;
-}
-
-.generated-preview pre {
-  background-color: #1a1a1a;
-  border: 1px solid #444;
-  border-radius: 4px;
-  padding: 1rem;
-  overflow-x: auto;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  margin-bottom: 1rem;
-  white-space: pre-wrap;
-  word-wrap: break-word;
   max-height: 400px;
   overflow-y: auto;
 }
 
+.generated-preview h3 {
+  margin-top: 0;
+  color: #4CAF50;
+}
+
+.generated-preview pre {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 15px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
 .generated-preview pre.streaming {
-  border-color: #4a9eff;
-  box-shadow: 0 0 10px rgba(74, 158, 255, 0.3);
+  border-left: 3px solid #4CAF50;
 }
 
 .typing-cursor {
   animation: blink 1s infinite;
-  color: #4a9eff;
 }
 
 @keyframes blink {
   0%, 50% { opacity: 1; }
   51%, 100% { opacity: 0; }
+}
+
+.adventure-summary {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #4CAF50;
+}
+
+.adventure-title h4 {
+  margin: 0 0 15px 0;
+  color: #4CAF50;
+  font-size: 1.4em;
+  font-weight: bold;
+}
+
+.adventure-description p {
+  margin: 0 0 20px 0;
+  line-height: 1.6;
+  color: #e0e0e0;
+  font-size: 1.1em;
+}
+
+.adventure-details {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.adventure-details p {
+  margin: 8px 0;
+  color: #b0b0b0;
+  font-size: 0.95em;
+}
+
+.adventure-details strong {
+  color: #4CAF50;
+  font-weight: bold;
 }
 
 .save-button {
