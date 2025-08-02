@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Adventure, ChatMessage, GameSession } from '../types';
+import { CHATGPT_EXECUTION_INSTRUCTIONS } from '../schemas/adventureSchema';
 
 interface AdventurePlayerProps {
   adventure: Adventure;
@@ -35,14 +36,14 @@ export const AdventurePlayer: React.FC<AdventurePlayerProps> = ({
     setIsLoading(true);
     
     try {
-      // Load the pre-generated adventure data
-      const adventureData = JSON.parse(adventure.jsonData);
+      // Use the adventure data directly from the new schema
+      const adventureData = adventure.adventureData;
       
       // Send initial message with adventure exposition
       const initialMessage: ChatMessage = {
         id: Date.now().toString(),
         type: 'system',
-        content: `Lade Abenteuer: ${adventure.title}\n\n${adventureData.description}`,
+        content: `Lade Abenteuer: ${adventure.title}\n\n${adventureData.metadata?.description || adventure.description}`,
         timestamp: new Date()
       };
 
@@ -55,21 +56,22 @@ export const AdventurePlayer: React.FC<AdventurePlayerProps> = ({
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Show the initial room description
-      const startRoom = adventureData.rooms.find((room: any) => room.id === adventureData.initialRoom);
+      const startRoomId = adventureData.gameState?.currentRoom || 'start';
+      const startRoom = adventureData.rooms?.[startRoomId];
       const expositionMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: `Willkommen zu "${adventure.title}"!\n\n${startRoom.description}\n\nDu kannst mit der Umgebung interagieren, Gegenstände sammeln und kombinieren, und mit NPCs sprechen.\n\nVerwende natürliche Sprache, um zu beschreiben, was du tun möchtest. Du kannst zum Beispiel sagen:\n- "Ich schaue mich um"\n- "Ich nehme den Schlüssel"\n- "Ich spreche mit dem NPC"\n- "Ich gehe nach Norden"\n\nWas möchtest du tun?`,
+        content: `Willkommen zu "${adventure.title}"!\n\n${startRoom?.longDescription || startRoom?.description || 'Du befindest dich in einem mysteriösen Raum.'}\n\nDu kannst mit der Umgebung interagieren, Gegenstände sammeln und kombinieren, und mit NPCs sprechen.\n\nVerwende natürliche Sprache, um zu beschreiben, was du tun möchtest. Du kannst zum Beispiel sagen:\n- "Ich schaue mich um"\n- "Ich nehme den Schlüssel"\n- "Ich spreche mit dem NPC"\n- "Ich gehe nach Norden"\n\nWas möchtest du tun?`,
         timestamp: new Date(),
-        roomId: adventureData.initialRoom
+        roomId: startRoomId
       };
 
       setSession(prev => ({
         ...prev,
         messages: [...prev.messages, expositionMessage],
-        currentRoom: adventureData.initialRoom
+        currentRoom: startRoomId
       }));
-      setCurrentRoom(adventureData.initialRoom);
+      setCurrentRoom(startRoomId);
       
     } catch (error) {
       console.error('Error initializing game:', error);
@@ -86,7 +88,7 @@ export const AdventurePlayer: React.FC<AdventurePlayerProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [adventure.id, adventure.title, adventure.jsonData]);
+  }, [adventure.id, adventure.title, adventure.adventureData, adventure.description]);
 
   // Initialize the game when component mounts
   useEffect(() => {
@@ -129,16 +131,21 @@ export const AdventurePlayer: React.FC<AdventurePlayerProps> = ({
     setIsLoading(true);
 
     try {
-      // Send message to ChatGPT API directly
+      // Send message to ChatGPT API with the execution instructions
       const adventureContext = `
-Aktuelles Abenteuer: ${JSON.stringify(JSON.parse(adventure.jsonData), null, 2)}
-Aktueller Raum: ${currentRoom}
-Inventar: ${session.inventory ? session.inventory.join(', ') : 'Leer'}
-Variablen: ${JSON.stringify(session.variables || {})}
+${CHATGPT_EXECUTION_INSTRUCTIONS}
 
-Spieler-Eingabe: ${content}
+ADVENTURE DATA:
+${JSON.stringify(adventure.adventureData, null, 2)}
 
-Antworte als der Abenteuer-Game Master. Berücksichtige den aktuellen Raum, das Inventar und die Spieler-Eingabe. Gib eine passende Antwort, die das Spiel voranbringt.
+CURRENT GAME STATE:
+- Current Room: ${currentRoom}
+- Inventory: ${session.inventory ? session.inventory.join(', ') : 'Leer'}
+- Variables: ${JSON.stringify(session.variables || {})}
+
+PLAYER INPUT: ${content}
+
+Antworte als der Abenteuer-Game Master basierend auf den Adventure-Daten und den Ausführungsanweisungen. Berücksichtige den aktuellen Raum, das Inventar und die Spieler-Eingabe. Gib eine passende Antwort, die das Spiel voranbringt.
       `;
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -148,7 +155,7 @@ Antworte als der Abenteuer-Game Master. Berücksichtige den aktuellen Raum, das 
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
+          model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',

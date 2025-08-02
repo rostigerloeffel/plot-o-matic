@@ -48,16 +48,6 @@ Hintergrund: Denke dir eine Handlung zum gegebenen Szenario aus. Die Handlung so
 
 WICHTIG: Du musst das Abenteuer in einem spezifischen JSON-Format serialisieren, damit ChatGPT es als Game Master ausführen kann. Das JSON enthält alle notwendigen Informationen für ChatGPT, um das Adventure zu leiten.
 
-CHATGPT-AUSFÜHRUNGSANWEISUNGEN:
-ChatGPT wird als Game Master fungieren und:
-1. Den Spielzustand verwalten (inventory, visitedRooms, completedPuzzles, gameVariables)
-2. Spieler-Eingaben interpretieren und entsprechende Aktionen ausführen
-3. Events bei relevanten Aktionen prüfen und auslösen
-4. NPC-Dialoge führen basierend auf dialogue-Nodes
-5. Rätsel-Lösungen prüfen und Belohnungen vergeben
-6. Atmosphärische Beschreibungen geben
-7. Sieg/Niederlage-Bedingungen prüfen
-
 JSON-SCHEMA (ChatGPT-freundlich):
 {
   "metadata": {
@@ -79,7 +69,7 @@ JSON-SCHEMA (ChatGPT-freundlich):
     }
   },
   "gameState": {
-    "currentRoom": "start_room_id",
+    "currentRoom": "start",
     "inventory": [],
     "visitedRooms": [],
     "completedPuzzles": [],
@@ -89,39 +79,39 @@ JSON-SCHEMA (ChatGPT-freundlich):
     "isVictory": false
   },
   "rooms": {
-    "room_id": {
-      "id": "room_id",
+    "start": {
+      "id": "start",
       "name": "Raumname",
       "description": "Kurze Beschreibung",
       "longDescription": "Detaillierte atmosphärische Beschreibung für ChatGPT",
       "exits": {
         "norden": {
-          "targetRoom": "target_room_id",
+          "targetRoom": "raum_2",
           "description": "Ausgang nach Norden",
           "isLocked": false,
           "requiredItems": [],
           "requiredPuzzles": []
         }
       },
-      "items": ["item_id"],
-      "npcs": ["npc_id"],
-      "puzzles": ["puzzle_id"],
-      "events": ["event_id"],
+      "items": ["item_1"],
+      "npcs": ["npc_1"],
+      "puzzles": ["puzzle_1"],
+      "events": ["event_1"],
       "isLocked": false,
       "requiredItems": [],
       "requiredPuzzles": []
     }
   },
   "items": {
-    "item_id": {
-      "id": "item_id",
+    "item_1": {
+      "id": "item_1",
       "name": "Gegenstandsname",
       "description": "Kurze Beschreibung",
       "longDescription": "Detaillierte Beschreibung für ChatGPT",
       "isTakeable": true,
       "isUsable": true,
       "isCombinable": false,
-      "location": "room_id",
+      "location": "start",
       "isVisible": true,
       "isLocked": false,
       "effects": [],
@@ -129,12 +119,12 @@ JSON-SCHEMA (ChatGPT-freundlich):
     }
   },
   "npcs": {
-    "npc_id": {
-      "id": "npc_id",
+    "npc_1": {
+      "id": "npc_1",
       "name": "NPC-Name",
       "description": "Beschreibung",
       "personality": "Detaillierte Persönlichkeit für ChatGPT",
-      "location": "room_id",
+      "location": "start",
       "isAlive": true,
       "isFriendly": true,
       "dialogue": {
@@ -154,15 +144,15 @@ JSON-SCHEMA (ChatGPT-freundlich):
     }
   },
   "puzzles": {
-    "puzzle_id": {
-      "id": "puzzle_id",
+    "puzzle_1": {
+      "id": "puzzle_1",
       "name": "Rätselname",
       "description": "Beschreibung für ChatGPT",
       "type": "inventory|logic|pattern|sequence|combination|timing",
       "difficulty": "easy|medium|hard",
       "isSolved": false,
       "isVisible": true,
-      "location": "room_id",
+      "location": "start",
       "requiredItems": [],
       "requiredPuzzles": [],
       "solution": {
@@ -178,8 +168,8 @@ JSON-SCHEMA (ChatGPT-freundlich):
     }
   },
   "events": {
-    "event_id": {
-      "id": "event_id",
+    "event_1": {
+      "id": "event_1",
       "name": "Ereignisname",
       "description": "Beschreibung für ChatGPT",
       "trigger": {
@@ -263,20 +253,9 @@ JSON-SCHEMA (ChatGPT-freundlich):
   }
 }
 
-CHATGPT-AUSFÜHRUNGSREGELN:
-1. Verwende die JSON-Daten als Spielwelt-Definition
-2. Halte den Spielzustand aktuell (inventory, visitedRooms, completedPuzzles, gameVariables)
-3. Reagiere auf Spieler-Eingaben basierend auf den verfügbaren Befehlen
-4. Prüfe bei jeder Aktion die Bedingungen (requiredItems, requiredPuzzles, etc.)
-5. Aktualisiere den Spielzustand entsprechend
-6. Gib detaillierte, atmosphärische Beschreibungen
-7. Verwende die defaultResponses für unbekannte oder unmögliche Aktionen
-8. Prüfe Events bei relevanten Aktionen (enter_room, pickup_item, etc.)
-9. Beende das Spiel wenn isGameOver oder isVictory true ist
-
 ANFORDERUNGEN:
 1. Erstelle mindestens 3-5 Räume je nach Schwierigkeitsgrad
-2. Jeder Raum muss eine eindeutige ID haben (z.B. "kueche", "flur", "keller")
+2. Jeder Raum muss eine eindeutige ID haben (z.B. "start", "kueche", "flur", "keller")
 3. Erstelle 2-4 Gegenstände, die der Spieler finden und benutzen kann
 4. Erstelle 1-3 Rätsel je nach Schwierigkeitsgrad
 5. Erstelle 1-2 NPCs falls aktiviert

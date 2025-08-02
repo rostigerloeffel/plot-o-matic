@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AdventureSettings } from '../types';
 import { generateAdventurePrompt } from '../templates/adventurePrompt';
 import { SYSTEM_PROMPT } from '../templates/systemPrompt';
+import { CURRENT_SCHEMA_VERSION } from '../schemas/adventureSchema';
 
 // Function to generate a random 10-character alphanumeric seed
 const generateRandomSeed = (): string => {
@@ -14,7 +15,7 @@ const generateRandomSeed = (): string => {
 };
 
 interface AdventureCreatorProps {
-  onSave: (settings: AdventureSettings, jsonData: string) => void;
+  onSave: (creatorSettings: any, creationPrompt: string, adventureData: any) => void;
   onCancel: () => void;
 }
 
@@ -53,7 +54,8 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedJson, setGeneratedJson] = useState<string>('');
+  const [generatedAdventureData, setGeneratedAdventureData] = useState<any>(null);
+  const [creationPrompt, setCreationPrompt] = useState<string>('');
   const [streamingContent, setStreamingContent] = useState<string>('');
 
   const generatePrompt = (settings: AdventureSettings): string => {
@@ -100,6 +102,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
     try {
       // Generate the ChatGPT prompt
       const prompt = generatePrompt(settings);
+      setCreationPrompt(prompt);
       
       // Call the ChatGPT API with streaming
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -170,7 +173,15 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
         }
       }
       
-      setGeneratedJson(fullContent);
+      // Parse the generated JSON data
+      try {
+        const parsedData = JSON.parse(fullContent);
+        setGeneratedAdventureData(parsedData);
+      } catch (parseError) {
+        console.error('Error parsing generated JSON:', parseError);
+        // If parsing fails, store the raw content
+        setGeneratedAdventureData({ rawContent: fullContent });
+      }
     } catch (error) {
       console.error('Error generating adventure:', error);
       
@@ -179,23 +190,48 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
       
       // Fallback: Show the prompt that would be sent to ChatGPT
       const prompt = generatePrompt(settings);
+      setCreationPrompt(prompt);
       const fallbackResponse = {
-        prompt: prompt,
-        message: `ChatGPT API nicht verfügbar: ${errorMessage}`,
-        adventure: {
+        metadata: {
           title: `Abenteuer: ${settings.scenario}`,
           description: `Ein ${settings.difficulty.level}es Abenteuer mit ${settings.rooms.amount} Räumen.`,
-          rooms: [],
-          npcs: [],
-          items: [],
-          puzzles: [],
-          initialRoom: 'start',
-          prompt: prompt
+          author: "Plot-O-Matic",
+          version: "1.0",
+          schemaVersion: CURRENT_SCHEMA_VERSION,
+          createdAt: new Date().toISOString(),
+          settings: {
+            scenario: settings.scenario,
+            rooms: settings.rooms.amount,
+            timeSystem: settings.timeSystem.enabled,
+            playerCanDie: settings.playerCanDie.enabled,
+            inventoryPuzzles: settings.inventoryPuzzles.enabled,
+            npcs: settings.npcs.enabled,
+            style: settings.style
+          }
+        },
+        gameState: {
+          currentRoom: "start",
+          inventory: [],
+          visitedRooms: [],
+          completedPuzzles: [],
+          gameVariables: {},
+          isGameOver: false,
+          isVictory: false
+        },
+        rooms: {},
+        items: {},
+        npcs: {},
+        puzzles: {},
+        events: {},
+        commands: {
+          verbs: {},
+          aliases: {},
+          defaultResponses: {}
         }
       };
       
-      setGeneratedJson(JSON.stringify(fallbackResponse, null, 2));
-      alert(`ChatGPT API nicht verfügbar: ${errorMessage}\n\nDer Prompt wird angezeigt, der an ChatGPT gesendet würde.`);
+      setGeneratedAdventureData(fallbackResponse);
+      alert(`ChatGPT API nicht verfügbar: ${errorMessage}\n\nEin Fallback-Abenteuer wurde erstellt.`);
     } finally {
       setIsGenerating(false);
     }
@@ -212,16 +248,29 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
       return;
     }
     
-    if (!generatedJson) {
+    if (!generatedAdventureData) {
       alert('Bitte generiere zuerst ein Abenteuer.');
       return;
     }
 
-    onSave(settings, generatedJson);
+    // Convert settings to the simplified format
+    const creatorSettings = {
+      scenario: settings.scenario,
+      seed: settings.seed,
+      difficulty: settings.difficulty.level,
+      rooms: settings.rooms.amount,
+      timeSystem: settings.timeSystem.enabled,
+      playerCanDie: settings.playerCanDie.enabled,
+      inventoryPuzzles: settings.inventoryPuzzles.enabled,
+      npcs: settings.npcs.enabled,
+      style: settings.style
+    };
+
+    onSave(creatorSettings, creationPrompt, generatedAdventureData);
   };
 
   const handleDownload = () => {
-    if (!generatedJson) {
+    if (!generatedAdventureData) {
       alert('Bitte generiere zuerst ein Abenteuer.');
       return;
     }
@@ -231,8 +280,33 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
       const scenarioName = settings.scenario.trim().replace(/[^a-zA-Z0-9äöüßÄÖÜ\s]/g, '').replace(/\s+/g, '_');
       const filename = `abenteuer_${scenarioName}_${settings.seed}.json`;
       
+      // Create the simplified adventure structure
+      const adventureStructure = {
+        metadata: {
+          title: generatedAdventureData.metadata?.title || `Abenteuer: ${settings.scenario}`,
+          description: generatedAdventureData.metadata?.description || `Ein ${settings.difficulty.level}es Abenteuer mit ${settings.rooms.amount} Räumen.`,
+          author: "Plot-O-Matic",
+          version: "1.0",
+          schemaVersion: CURRENT_SCHEMA_VERSION,
+          createdAt: new Date().toISOString()
+        },
+        creatorSettings: {
+          scenario: settings.scenario,
+          seed: settings.seed,
+          difficulty: settings.difficulty.level,
+          rooms: settings.rooms.amount,
+          timeSystem: settings.timeSystem.enabled,
+          playerCanDie: settings.playerCanDie.enabled,
+          inventoryPuzzles: settings.inventoryPuzzles.enabled,
+          npcs: settings.npcs.enabled,
+          style: settings.style
+        },
+        creationPrompt: creationPrompt,
+        adventureData: generatedAdventureData
+      };
+      
       // Create blob and download
-      const blob = new Blob([generatedJson], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(adventureStructure, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -522,14 +596,14 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
           {isGenerating ? 'Generiere...' : 'Abenteuer generieren'}
         </button>
         
-        {(generatedJson || streamingContent) && (
+        {(generatedAdventureData || streamingContent) && (
           <div className="generated-preview">
             <h3>Generiertes Abenteuer</h3>
             <pre className={isGenerating ? 'streaming' : ''}>
-              {isGenerating ? streamingContent : generatedJson}
+              {isGenerating ? streamingContent : JSON.stringify(generatedAdventureData, null, 2)}
               {isGenerating && <span className="typing-cursor">|</span>}
             </pre>
-            {!isGenerating && generatedJson && (
+            {!isGenerating && generatedAdventureData && (
               <div className="action-buttons">
                 <button onClick={handleSave} className="save-button">
                   Abenteuer speichern

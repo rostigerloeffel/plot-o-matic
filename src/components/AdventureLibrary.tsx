@@ -49,10 +49,10 @@ export const AdventureLibrary: React.FC<AdventureLibraryProps> = ({
               </div>
               
               <div className="adventure-settings">
-                <span>Schwierigkeit: {adventure.settings.difficulty.level}</span>
-                <span>Räume: {adventure.settings.rooms.amount}</span>
-                {adventure.settings.npcs.enabled && <span>NPCs</span>}
-                {adventure.settings.inventoryPuzzles.enabled && <span>Inventar-Rätsel</span>}
+                <span>Schwierigkeit: {adventure.creatorSettings.difficulty}</span>
+                <span>Räume: {adventure.creatorSettings.rooms}</span>
+                {adventure.creatorSettings.npcs && <span>NPCs</span>}
+                {adventure.creatorSettings.inventoryPuzzles && <span>Inventar-Rätsel</span>}
               </div>
               
               <div className="adventure-actions">

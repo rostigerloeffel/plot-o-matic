@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Adventure, ViewMode, AdventureSettings } from './types';
+import { Adventure, ViewMode } from './types';
 import { AdventureLibrary } from './components/AdventureLibrary';
 import { AdventureCreator } from './components/AdventureCreator';
 import { AdventurePlayer } from './components/AdventurePlayer';
 import { ApiKeyDialog } from './components/ApiKeyDialog';
 import { useApiKey } from './hooks/useApiKey';
+import { CURRENT_SCHEMA_VERSION } from './schemas/adventureSchema';
 
 function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('play');
@@ -20,12 +21,43 @@ function App() {
     if (savedAdventures) {
       try {
         const parsed = JSON.parse(savedAdventures);
-        // Convert date strings back to Date objects
-        const adventuresWithDates = parsed.map((adv: any) => ({
-          ...adv,
-          createdAt: new Date(adv.createdAt),
-          updatedAt: new Date(adv.updatedAt)
-        }));
+        // Convert date strings back to Date objects and handle migration
+        const adventuresWithDates = parsed.map((adv: any) => {
+          // Handle migration from old format to new format
+          if (adv.settings && adv.jsonData) {
+            // Old format - migrate to new format
+            return {
+              id: adv.id,
+              title: adv.title,
+              description: adv.description,
+              author: adv.author,
+              version: "1.0",
+              schemaVersion: CURRENT_SCHEMA_VERSION,
+              creatorSettings: {
+                scenario: adv.settings.scenario,
+                seed: adv.settings.seed,
+                difficulty: adv.settings.difficulty.level,
+                rooms: adv.settings.rooms.amount,
+                timeSystem: adv.settings.timeSystem.enabled,
+                playerCanDie: adv.settings.playerCanDie.enabled,
+                inventoryPuzzles: adv.settings.inventoryPuzzles.enabled,
+                npcs: adv.settings.npcs.enabled,
+                style: adv.settings.style
+              },
+              creationPrompt: "", // We don't have the original prompt for old adventures
+              adventureData: JSON.parse(adv.jsonData),
+              createdAt: new Date(adv.createdAt),
+              updatedAt: new Date(adv.updatedAt)
+            };
+          } else {
+            // New format - just convert dates
+            return {
+              ...adv,
+              createdAt: new Date(adv.createdAt),
+              updatedAt: new Date(adv.updatedAt)
+            };
+          }
+        });
         setAdventures(adventuresWithDates);
       } catch (error) {
         console.error('Error loading adventures:', error);
@@ -51,14 +83,17 @@ function App() {
     }
   };
 
-  const handleSaveAdventure = (settings: AdventureSettings, jsonData: string) => {
+  const handleSaveAdventure = (creatorSettings: any, creationPrompt: string, adventureData: any) => {
     const newAdventure: Adventure = {
       id: `adventure_${Date.now()}`,
-      title: `Abenteuer: ${settings.scenario.substring(0, 50)}${settings.scenario.length > 50 ? '...' : ''}`,
-      description: `Ein ${settings.difficulty.level}es Abenteuer mit ${settings.rooms.amount} Räumen.`,
+      title: adventureData.metadata?.title || `Abenteuer: ${creatorSettings.scenario.substring(0, 50)}${creatorSettings.scenario.length > 50 ? '...' : ''}`,
+      description: adventureData.metadata?.description || `Ein ${creatorSettings.difficulty}es Abenteuer mit ${creatorSettings.rooms} Räumen.`,
       author: 'Plot-O-Matic',
-      settings,
-      jsonData,
+      version: "1.0",
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      creatorSettings,
+      creationPrompt,
+      adventureData,
       createdAt: new Date(),
       updatedAt: new Date()
     };
