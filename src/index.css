@@ -889,6 +889,10 @@ body {
   font-size: 0.95rem;
 }
 
+.form-group label:first-child {
+  margin-top: 0.75rem;
+}
+
 .form-group small {
   color: #808080;
   font-size: 0.85rem;
