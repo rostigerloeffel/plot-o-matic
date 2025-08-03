@@ -57,6 +57,20 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
   const [generatedAdventureData, setGeneratedAdventureData] = useState<any>(null);
   const [creationPrompt, setCreationPrompt] = useState<string>('');
 
+  // Function to extract JSON from markdown code blocks
+  const extractJsonFromMarkdown = (content: string): string => {
+    // Remove markdown code block markers
+    let jsonContent = content.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+    
+    // If there are still multiple code blocks, try to find the JSON one
+    const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      jsonContent = codeBlockMatch[1].trim();
+    }
+    
+    return jsonContent;
+  };
+
   const generatePrompt = (settings: AdventureSettings): string => {
     return generateAdventurePrompt({
       scenario: settings.scenario,
@@ -172,12 +186,18 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
       
       // Parse the generated JSON data
       try {
-        const parsedData = JSON.parse(fullContent);
+        // Extract JSON from markdown code blocks
+        const jsonContent = extractJsonFromMarkdown(fullContent);
+        const parsedData = JSON.parse(jsonContent);
         setGeneratedAdventureData(parsedData);
       } catch (parseError) {
         console.error('Error parsing generated JSON:', parseError);
+        console.error('Raw content:', fullContent);
         // If parsing fails, store the raw content
-        setGeneratedAdventureData({ rawContent: fullContent });
+        setGeneratedAdventureData({ 
+          rawContent: fullContent,
+          parseError: parseError instanceof Error ? parseError.message : 'Unknown parsing error'
+        });
       }
     } catch (error) {
       console.error('Error generating adventure:', error);
@@ -339,6 +359,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
               }))}
               placeholder="Beschreibe das Szenario deines Abenteuers..."
               rows={4}
+              className="form-textarea"
             />
           </div>
 
@@ -404,6 +425,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
                 }
               }))}
               placeholder="Zusätzliche Anmerkungen zum Schwierigkeitsgrad"
+              className="form-input"
             />
           </div>
 
@@ -440,6 +462,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
                 }
               }))}
               placeholder="Zusätzliche Anmerkungen zu den Räumen"
+              className="form-input"
             />
           </div>
         </div>
@@ -474,6 +497,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
                   }
                 }))}
                 placeholder="Beschreibung des Zeitsystems"
+                className="form-input"
               />
             </div>
 
@@ -503,6 +527,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
                   }
                 }))}
                 placeholder="Beschreibung der Todesmechanik"
+                className="form-input"
               />
             </div>
 
@@ -532,6 +557,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
                   }
                 }))}
                 placeholder="Beschreibung der Inventar-Rätsel"
+                className="form-input"
               />
             </div>
 
@@ -561,6 +587,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
                   }
                 }))}
                 placeholder="Beschreibung der NPCs"
+                className="form-input"
               />
             </div>
           </div>
@@ -579,6 +606,7 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
               }))}
               placeholder="Beschreibe den gewünschten Stil des Abenteuers..."
               rows={3}
+              className="form-textarea"
             />
           </div>
         </div>
@@ -596,31 +624,42 @@ export const AdventureCreator: React.FC<AdventureCreatorProps> = ({
         {generatedAdventureData && (
           <div className="generated-preview">
             <h3>Generiertes Abenteuer</h3>
-            <div className="adventure-summary">
-              <div className="adventure-title">
-                <h4>{generatedAdventureData.metadata?.title || 'Unbekanntes Abenteuer'}</h4>
+            {generatedAdventureData.parseError ? (
+              <div className="error-summary">
+                <p><strong>Fehler beim Parsen der JSON-Daten:</strong></p>
+                <p>{generatedAdventureData.parseError}</p>
+                <details>
+                  <summary>Rohe Antwort anzeigen</summary>
+                  <pre className="raw-content">{generatedAdventureData.rawContent}</pre>
+                </details>
               </div>
-              <div className="adventure-description">
-                <p>{generatedAdventureData.metadata?.description || 'Keine Beschreibung verfügbar.'}</p>
+            ) : (
+              <div className="adventure-summary">
+                <div className="adventure-title">
+                  <h4>{generatedAdventureData.metadata?.title || 'Unbekanntes Abenteuer'}</h4>
+                </div>
+                <div className="adventure-description">
+                  <p>{generatedAdventureData.metadata?.description || 'Keine Beschreibung verfügbar.'}</p>
+                </div>
+                <div className="adventure-details">
+                  <p><strong>Schwierigkeit:</strong> {generatedAdventureData.metadata?.settings?.difficulty || 'Unbekannt'}</p>
+                  <p><strong>Räume:</strong> {Object.keys(generatedAdventureData.rooms || {}).length}</p>
+                  <p><strong>Gegenstände:</strong> {Object.keys(generatedAdventureData.items || {}).length}</p>
+                  {generatedAdventureData.metadata?.settings?.npcs && (
+                    <p><strong>NPCs:</strong> {Object.keys(generatedAdventureData.npcs || {}).length}</p>
+                  )}
+                  <p><strong>Rätsel:</strong> {Object.keys(generatedAdventureData.puzzles || {}).length}</p>
+                </div>
+                <div className="action-buttons">
+                  <button onClick={handleSave} className="save-button">
+                    Abenteuer speichern
+                  </button>
+                  <button onClick={handleDownload} className="download-button">
+                    JSON herunterladen
+                  </button>
+                </div>
               </div>
-              <div className="adventure-details">
-                <p><strong>Schwierigkeit:</strong> {generatedAdventureData.metadata?.settings?.difficulty || 'Unbekannt'}</p>
-                <p><strong>Räume:</strong> {Object.keys(generatedAdventureData.rooms || {}).length}</p>
-                <p><strong>Gegenstände:</strong> {Object.keys(generatedAdventureData.items || {}).length}</p>
-                {generatedAdventureData.metadata?.settings?.npcs && (
-                  <p><strong>NPCs:</strong> {Object.keys(generatedAdventureData.npcs || {}).length}</p>
-                )}
-                <p><strong>Rätsel:</strong> {Object.keys(generatedAdventureData.puzzles || {}).length}</p>
-              </div>
-              <div className="action-buttons">
-                <button onClick={handleSave} className="save-button">
-                  Abenteuer speichern
-                </button>
-                <button onClick={handleDownload} className="download-button">
-                  JSON herunterladen
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         )}
         
