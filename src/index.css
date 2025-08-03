@@ -18,6 +18,10 @@
   box-sizing: border-box;
 }
 
+button {
+  margin-top: 0;
+}
+
 body {
   margin: 0;
   display: flex;
@@ -440,6 +444,7 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   flex: 1;
+  margin-top: 0;
 }
 
 .play-button:hover {
@@ -456,6 +461,7 @@ body {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  margin-top: 0;
 }
 
 .edit-button:hover {
@@ -472,6 +478,7 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   font-weight: 500;
+  margin-top: 0;
 }
 
 .delete-button:hover {
@@ -889,7 +896,7 @@ body {
   font-size: 0.95rem;
 }
 
-.form-group label:first-child {
+.form-group > label:first-child {
   margin-top: 0.75rem;
 }
 
